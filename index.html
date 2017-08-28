@@ -9,7 +9,6 @@
 		body {
 			font-family: Monospace;
 			background-color: #39b54a;
-			/*background-color: #ddd;*/
 			margin: 0px;
 			cursor: grab;
 			overflow: hidden;
@@ -77,48 +76,6 @@
 		scene.add(dirLight2);
 
 		//GEOMETRY
-
-		//Circle Group (circle and 360 text)
-		var circleGroup = new THREE.Group();
-
-		//Circle
-		var geometry = new THREE.CircleGeometry(50, 64);
-		//Delete last 2 points from the circle
-		geometry.vertices.shift();
-		geometry.vertices.shift();
-		var material = new THREE.LineBasicMaterial({
-			color: 0x000000,
-			transparent: true
-		});
-		var circle = new THREE.Line(geometry, material);
-		circle.position.y = -20;
-		circle.rotation.x = -Math.PI / 2;
-		circle.rotation.z = Math.PI / 2;
-		scene.add(circle);
-		circleGroup.add(circle);
-
-		//360° Text
-		var text360;
-		var loader = new THREE.FontLoader();
-		loader.load('fonts/Roboto_Light.json', function(font) {
-			var geometry = new THREE.TextGeometry('360°', {
-				font: font,
-				size: 1.6,
-				height: 0.1
-			});
-			var material = new THREE.MeshBasicMaterial({
-				color: 0x000000,
-				transparent: true
-			});
-			text360 = new THREE.Mesh(geometry, material);
-			text360.position.x = 2.5;
-			text360.position.y = -20.6;
-			text360.position.z = -50;
-			text360.rotateY(Math.PI);
-			scene.add(text360);
-			circleGroup.add(text360);
-			scene.add(circleGroup);
-		});
 
 		//T-shirt
 		var objectLoader = new THREE.ObjectLoader();
@@ -199,14 +156,6 @@
 
 			controls.update();
 			stats.update();
-
-			circleGroup.rotation.y = Math.atan2((camera.position.x - circleGroup.position.x), (camera.position.z - circleGroup.position.z)) - Math.PI;
-
-			circleGroup.traverse(function(node) {
-				if (node.material) {
-					node.material.opacity = map_range(camera.position.y, 0, 50, 0.1, 0);
-				}
-			});
 
 			renderer.render(scene, camera);
 		}
