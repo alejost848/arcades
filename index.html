@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<title>Arcades | T-shirt preview</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+	<style>
+		body {
+			font-family: Monospace;
+			background-color: #39b54a;
+			/*background-color: #ddd;*/
+			margin: 0px;
+			cursor: grab;
+			overflow: hidden;
+		}
+
+		#info {
+			position: absolute;
+			top: 0px;
+			width: 100%;
+			padding: 5px;
+			font-family: Monospace;
+			font-size: 13px;
+			text-align: center;
+		}
+	</style>
+</head>
+
+<body>
+
+	<div id="container"></div>
+
+	<script src="js/three.min.js"></script>
+	<script src="js/controls/OrbitControls.js"></script>
+	<script src="js/libs/stats.min.js"></script>
+
+	<script>
+		var container = document.getElementById('container');
+		var scene = new THREE.Scene();
+
+		//Renderer
+		var renderer = new THREE.WebGLRenderer({
+			antialias: true,
+			alpha: true
+		});
+		renderer.setPixelRatio(window.devicePixelRatio);
+		renderer.setSize(window.innerWidth, window.innerHeight);
+
+		container.appendChild(renderer.domElement);
+
+		//Camera
+		var camera = new THREE.PerspectiveCamera(36, window.innerWidth / window.innerHeight, 1, 10000);
+		camera.position.z = -1000;
+
+		// Camera controls
+		var controls = new THREE.OrbitControls(camera, renderer.domElement);
+		controls.enablePan = false;
+		controls.enableDamping = true;
+		controls.dampingFactor = 0.05;
+		controls.maxPolarAngle = Math.PI / 2;
+		controls.rotateSpeed = 0.1;
+		controls.minDistance = 250;
+		controls.maxDistance = 250;
+
+		//Lights
+		var light = new THREE.HemisphereLight(0xffffff, 0xdddddd, 1);
+		light.position.set(0, 100, 0);
+		scene.add(light);
+
+		var dirLight = new THREE.DirectionalLight(0xffffff, -0.1);
+		dirLight.position.set(100, 0, -80);
+		scene.add(dirLight);
+
+		var dirLight2 = new THREE.DirectionalLight(0xffffff, -0.1);
+		dirLight2.position.set(-100, 0, 80);
+		scene.add(dirLight2);
+
+		//GEOMETRY
+
+		//Circle Group (circle and 360 text)
+		var circleGroup = new THREE.Group();
+
+		//Circle
+		var geometry = new THREE.CircleGeometry(50, 64);
+		//Delete last 2 points from the circle
+		geometry.vertices.shift();
+		geometry.vertices.shift();
+		var material = new THREE.LineBasicMaterial({
+			color: 0x000000,
+			transparent: true
+		});
+		var circle = new THREE.Line(geometry, material);
+		circle.position.y = -20;
+		circle.rotation.x = -Math.PI / 2;
+		circle.rotation.z = Math.PI / 2;
+		scene.add(circle);
+		circleGroup.add(circle);
+
+		//360° Text
+		var text360;
+		var loader = new THREE.FontLoader();
+		loader.load('fonts/Roboto_Light.json', function(font) {
+			var geometry = new THREE.TextGeometry('360°', {
+				font: font,
+				size: 1.6,
+				height: 0.1
+			});
+			var material = new THREE.MeshBasicMaterial({
+				color: 0x000000,
+				transparent: true
+			});
+			text360 = new THREE.Mesh(geometry, material);
+			text360.position.x = 2.5;
+			text360.position.y = -20.6;
+			text360.position.z = -50;
+			text360.rotateY(Math.PI);
+			scene.add(text360);
+			circleGroup.add(text360);
+			scene.add(circleGroup);
+		});
+
+		//T-shirt
+		var objectLoader = new THREE.ObjectLoader();
+		var material = new THREE.MeshPhongMaterial( { side: THREE.DoubleSide } );
+		objectLoader.load(
+			"male_tshirt.json",
+			function(obj) {
+				obj.scale.set(10, 10, 10);
+				obj.rotateY(Math.PI/1.4);
+				obj.traverse(function(child) {
+					if (child instanceof THREE.Mesh){
+						child.material = material;
+					}
+				});
+				var loader = new THREE.TextureLoader();
+			  loader.load("image_maps/normalMap.jpg", function(texture) {
+			    material.normalMap = texture;
+			    material.needsUpdate = true;
+			  });
+				loader.load("image_maps/specularMap.jpg", function(texture) {
+			    material.map = texture;
+			    material.needsUpdate = true;
+			  });
+				scene.add(obj);
+			},
+			// Function called when download progresses
+			function(xhr) {
+				console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+			},
+			// Function called when download errors
+			function(xhr) {
+				console.error('An error happened');
+			}
+		);
+
+		//Design
+		var objectLoader = new THREE.ObjectLoader();
+		var designMaterial = new THREE.MeshPhongMaterial( { transparent: true } );
+		designMaterial.opacity = 0;
+		objectLoader.load(
+			"design.json",
+			function(obj) {
+				obj.scale.set(10, 10, 10);
+				obj.rotateY(Math.PI/1.4);
+				obj.traverse(function(child) {
+					if (child instanceof THREE.Mesh){
+						child.material = designMaterial;
+					}
+				});
+				var loader = new THREE.TextureLoader();
+				loader.load("image_maps/textureMap.png", function(texture) {
+					texture.magFilter = THREE.LinearFilter;
+					texture.minFilter = THREE.LinearFilter;
+
+					designMaterial.opacity = 1;
+
+			    designMaterial.map = texture;
+			    designMaterial.needsUpdate = true;
+			  });
+				scene.add(obj);
+			},
+			// Function called when download progresses
+			function(xhr) {
+				console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+			},
+			// Function called when download errors
+			function(xhr) {
+				console.error('An error happened');
+			}
+		);
+
+		//Stats
+		var stats = new Stats();
+		container.appendChild(stats.dom);
+
+		function animate() {
+			requestAnimationFrame(animate);
+
+			controls.update();
+			stats.update();
+
+			circleGroup.rotation.y = Math.atan2((camera.position.x - circleGroup.position.x), (camera.position.z - circleGroup.position.z)) - Math.PI;
+
+			circleGroup.traverse(function(node) {
+				if (node.material) {
+					node.material.opacity = map_range(camera.position.y, 0, 50, 0.1, 0);
+				}
+			});
+
+			renderer.render(scene, camera);
+		}
+		animate();
+
+		function map_range(value, low1, high1, low2, high2) {
+			return low2 + (high2 - low2) * (value - low1) / (high1 - low1);
+		}
+
+		window.addEventListener('resize', onWindowResize, false);
+
+		function onWindowResize() {
+			camera.aspect = window.innerWidth / window.innerHeight;
+			camera.updateProjectionMatrix();
+			renderer.setSize(window.innerWidth, window.innerHeight);
+		}
+	</script>
+
+</body>
+
+</html>
