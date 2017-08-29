@@ -11,28 +11,18 @@
 			background-color: #39b54a;
 			margin: 0px;
 			cursor: grab;
+			cursor: -webkit-grab;
 			overflow: hidden;
 		}
-
-		#info {
-			position: absolute;
-			top: 0px;
-			width: 100%;
-			padding: 5px;
-			font-family: Monospace;
-			font-size: 13px;
-			text-align: center;
-		}
 	</style>
+	<script src="js/three.min.js"></script>
+	<script src="js/controls/OrbitControls.js"></script>
+	<script src="js/libs/stats.min.js"></script>
 </head>
 
 <body>
 
 	<div id="container"></div>
-
-	<script src="js/three.min.js"></script>
-	<script src="js/controls/OrbitControls.js"></script>
-	<script src="js/libs/stats.min.js"></script>
 
 	<script>
 		var container = document.getElementById('container');
@@ -75,65 +65,47 @@
 		dirLight2.position.set(-100, 0, 80);
 		scene.add(dirLight2);
 
-		//GEOMETRY
-
 		//T-shirt
+		var tshirtMaterial = new THREE.MeshPhongMaterial( { side: THREE.DoubleSide } );
+		var tagMaterial = new THREE.MeshPhongMaterial();
+		var designMaterial = new THREE.MeshPhongMaterial( { transparent: true } );
+		designMaterial.opacity = 0;
+
 		var objectLoader = new THREE.ObjectLoader();
-		var material = new THREE.MeshPhongMaterial( { side: THREE.DoubleSide } );
 		objectLoader.load(
 			"male_tshirt.json",
 			function(obj) {
 				obj.scale.set(10, 10, 10);
 				obj.rotateY(Math.PI/1.4);
-				obj.traverse(function(child) {
-					if (child instanceof THREE.Mesh){
-						child.material = material;
-					}
-				});
-				var loader = new THREE.TextureLoader();
-			  loader.load("image_maps/normalMap.jpg", function(texture) {
-			    material.normalMap = texture;
-			    material.needsUpdate = true;
-			  });
-				loader.load("image_maps/specularMap.jpg", function(texture) {
-			    material.map = texture;
-			    material.needsUpdate = true;
-			  });
-				scene.add(obj);
-			},
-			// Function called when download progresses
-			function(xhr) {
-				console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-			},
-			// Function called when download errors
-			function(xhr) {
-				console.error('An error happened');
-			}
-		);
 
-		//Design
-		var objectLoader = new THREE.ObjectLoader();
-		var designMaterial = new THREE.MeshPhongMaterial( { transparent: true } );
-		designMaterial.opacity = 0;
-		objectLoader.load(
-			"design.json",
-			function(obj) {
-				obj.scale.set(10, 10, 10);
-				obj.rotateY(Math.PI/1.4);
 				obj.traverse(function(child) {
-					if (child instanceof THREE.Mesh){
+					if (child.name == "T_Shirt"){
+						child.material = tshirtMaterial;
+					}	else if (child.name == "Tag"){
+						child.material = tagMaterial;
+					} else if (child.name == "Design"){
 						child.material = designMaterial;
 					}
 				});
 				var loader = new THREE.TextureLoader();
+			  loader.load("image_maps/normalMap.jpg", function(texture) {
+			    tshirtMaterial.normalMap = texture;
+			    tshirtMaterial.needsUpdate = true;
+			  });
+				loader.load("image_maps/specularMap.jpg", function(texture) {
+			    tshirtMaterial.map = texture;
+			    tshirtMaterial.needsUpdate = true;
+			  });
 				loader.load("image_maps/textureMap.png", function(texture) {
-					texture.magFilter = THREE.LinearFilter;
 					texture.minFilter = THREE.LinearFilter;
-
 					designMaterial.opacity = 1;
-
 			    designMaterial.map = texture;
 			    designMaterial.needsUpdate = true;
+			  });
+				loader.load("image_maps/tagMap.png", function(texture) {
+					texture.minFilter = THREE.LinearFilter;
+			    tagMaterial.map = texture;
+			    tagMaterial.needsUpdate = true;
 			  });
 				scene.add(obj);
 			},
