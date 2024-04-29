@@ -1,2 +1,2 @@
 # arcades
-Arcades Studio website
+Arcades Studio website.
